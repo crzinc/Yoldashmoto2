@@ -215,6 +215,7 @@ class _PState extends ConsumerState<ProfileScreen> {
             if (ok == true) {
               try {
                 if (hasSupabase) await Supabase.instance.client.from('profiles').update({'blocked': true}).eq('id', Supabase.instance.client.auth.currentUser!.id);
+                await Backend.signOut();
               } catch (_) {}
               ref.read(sessionProvider.notifier).logout();
               if (context.mounted) context.go('/welcome');
@@ -223,9 +224,10 @@ class _PState extends ConsumerState<ProfileScreen> {
           child: Text(l.t('deleteAccount')),
         ),
         TextButton(
-          onPressed: () {
+          onPressed: () async {
+            await Backend.signOut();
             ref.read(sessionProvider.notifier).logout();
-            context.go('/welcome');
+            if (context.mounted) context.go('/welcome');
           },
           child: Text(l.t('logout')),
         ),

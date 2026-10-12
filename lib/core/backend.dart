@@ -17,6 +17,14 @@ String nid() => const Uuid().v4().substring(0, 8);
 
 /// Unified backend: Supabase when keys provided, local mock otherwise.
 /// All writes go through here so Realtime/RLS wiring is single-point.
+/// Phone+password auth without SMS costs: phone maps to a synthetic
+/// email (Supabase has no native phone+password). Enable Email provider
+/// in dashboard; no SMS provider needed.
+String phoneToEmail(String phone) {
+  final digits = phone.replaceAll(RegExp(r'\D'), '');
+  return '$digits@phone.yoldashmoto.app';
+}
+
 class Backend {
   static Future<void> insertSos({
     required String problemId,
@@ -51,14 +59,26 @@ class Backend {
     return c.storage.from(bucket).getPublicUrl(path);
   }
 
-  static Future<void> sendOtp(String phone) async {
+  static Future<void> signUp(String phone, String password) async {
     if (!hasSupabase) return;
-    await Supabase.instance.client.auth.signInWithOtp(phone: phone);
+    await Supabase.instance.client.auth.signUp(
+      email: phoneToEmail(phone),
+      password: password,
+      data: {'phone': phone},
+    );
   }
 
-  static Future<void> verifyOtp(String phone, String token) async {
+  static Future<void> signIn(String phone, String password) async {
     if (!hasSupabase) return;
-    await Supabase.instance.client.auth.verifyOTP(type: OtpType.sms, phone: phone, token: token);
+    await Supabase.instance.client.auth.signInWithPassword(
+      email: phoneToEmail(phone),
+      password: password,
+    );
+  }
+
+  static Future<void> signOut() async {
+    if (!hasSupabase) return;
+    await Supabase.instance.client.auth.signOut();
   }
 }
 
