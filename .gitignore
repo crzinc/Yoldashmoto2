@@ -1,0 +1,8 @@
+.dart_tool/
+.build/
+build/
+.idea/
+.DS_Store
+.env
+*.freezed.dart
+*.g.dart
