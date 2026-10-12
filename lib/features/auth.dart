@@ -88,7 +88,12 @@ class _RoleState extends ConsumerState<RoleScreen> {
     }
     setState(() { busy = true; error = null; });
     try {
-      await Backend.signUp(phone.text.trim(), password.text);
+      // No email confirmation: sign up then straight in.
+      // Requires "Confirm email" OFF in Supabase Dashboard → Auth → Email.
+      try {
+        await Backend.signUp(phone.text.trim(), password.text);
+      } catch (_) {}
+      await Backend.signIn(phone.text.trim(), password.text);
       ref.read(profileNameProvider.notifier).state = name.text;
       ref.read(profilePhoneProvider.notifier).state = phone.text.trim();
       ref.read(profileRidingProvider.notifier).state = riding;

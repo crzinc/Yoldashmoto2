@@ -4,5 +4,7 @@ build/
 .idea/
 .DS_Store
 .env
+.env.local
+.env*.local
 *.freezed.dart
 *.g.dart
