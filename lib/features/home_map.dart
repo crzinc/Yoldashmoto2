@@ -143,6 +143,12 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
       });
     }
     final visible = ref.watch(settingsProvider).visibleOnMap;
+    // Role visibility: riders see only masters/workshops (+SOS calls);
+    // mechanics & tow see only riders in search (active SOS / orders).
+    final role = ref.watch(sessionProvider).role;
+    final mechView = role == UserRole.mechanic || role == UserRole.tow;
+    final onlineMechs = mechView ? const <MechanicInfo>[] : mechs.where((e) => e.online).toList();
+    final availTows = mechView ? const <TowInfo>[] : tows.where((e) => e.availableNow).toList();
 
     return Scaffold(
       body: Stack(children: [
@@ -175,7 +181,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                     child: _SosPin(active: s.id == selSosId || (mySos != null && s.id == mySos.id)),
                   ),
                 ),
-              for (final m in mechs.where((e) => e.online))
+              for (final m in onlineMechs)
                 Marker(
                   point: _mechPoint(m), width: 44, height: 44,
                   child: GestureDetector(
@@ -194,7 +200,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                     ),
                   ),
                 ),
-              for (final t in tows.where((e) => e.availableNow))
+              for (final t in availTows)
                 Marker(
                   point: _towPoint(t.distKm), width: 40, height: 40,
                   child: const Icon(Icons.local_shipping, size: 28, color: Colors.green),
@@ -275,7 +281,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
               child: Row(children: [
                 Chip(
                   avatar: const CircleAvatar(backgroundColor: Colors.green, radius: 5),
-                  label: Text('${mechs.where((e) => e.online).length + 128} online'),
+                  label: Text(mechView ? '${feed.length} searching' : '${mechs.where((e) => e.online).length + 128} online'),
                 ),
                 const SizedBox(width: 8),
                 if (routeLoading) const Chip(label: Text('…')),
@@ -319,7 +325,52 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                 _OrderCard(onOpen: () => context.push('/call/track'))
               else if (mySos != null)
                 _MySosCard(onOpen: () => context.push('/sos/track'))
-              else ...[
+              else if (mechView) ...[
+                Row(children: [
+                  Expanded(
+                    child: Text(
+                      ref.watch(sessionProvider).mechanicOnline ? l.t('online') : l.t('offline'),
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    ),
+                  ),
+                  Switch(
+                    value: ref.watch(sessionProvider).mechanicOnline,
+                    onChanged: (v) => ref.read(sessionProvider.notifier).setOnline(v),
+                  ),
+                ]),
+                FilledButton.icon(
+                  onPressed: () => context.push('/mechanic/inbox'),
+                  icon: const Icon(Icons.inbox_outlined),
+                  label: const Text('Inbox'),
+                ),
+                const SizedBox(height: 8),
+                Text(l.t('nearby'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                const SizedBox(height: 8),
+                if (feed.isEmpty) YmEmpty(l.t('noOneNearby')),
+                for (final s in feed)
+                  YmCard(
+                    child: Row(children: [
+                      const CircleAvatar(backgroundColor: Colors.red, child: Icon(Icons.sos, color: Colors.white, size: 18)),
+                      const SizedBox(width: 12),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('${l.problemName(s.problemId)} · ${s.distKm ?? 1.2} km', style: const TextStyle(fontWeight: FontWeight.w800)),
+                        Text('${s.responders} responders'),
+                      ])),
+                      TextButton(
+                        onPressed: () {
+                          setState(() { selSosId = s.id; selMechId = null; });
+                          _routeTo(s.point);
+                        },
+                        child: Text(l.t('navigate')),
+                      ),
+                      FilledButton(
+                        style: FilledButton.styleFrom(minimumSize: const Size(88, 40)),
+                        onPressed: () => context.push('/mechanic/inbox'),
+                        child: Text(l.t('accept')),
+                      ),
+                    ]),
+                  ),
+              ] else ...[
                 Row(children: [
                   Expanded(child: SosButton(onTap: () => context.push('/sos/new'))),
                   const SizedBox(width: 12),
