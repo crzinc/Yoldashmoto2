@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,7 +62,12 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
   }
 
   Future<void> _locate() async {
-    await Permission.locationWhenInUse.request();
+    // permission_handler unsupported on web — browser prompts via geolocator.
+    if (!kIsWeb) {
+      try {
+        await Permission.locationWhenInUse.request();
+      } catch (_) {}
+    }
     try {
       final p = await currentPos();
       if (p != null && mounted) {
