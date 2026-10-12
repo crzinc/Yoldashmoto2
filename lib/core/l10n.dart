@@ -66,6 +66,9 @@ class L10n {
     'retry': {'az': 'Yenidən cəhd', 'ru': 'Повторить', 'en': 'Retry'},
     'widen': {'az': 'Radiusu genişləndir', 'ru': 'Расширить радиус', 'en': 'Widen radius'},
     'receipt': {'az': 'Qəbz', 'ru': 'Чек', 'en': 'Receipt'},
+    'whereTo': {'az': 'Hara gedirsən?', 'ru': 'Куда едем?', 'en': 'Where to?'},
+    'nearby': {'az': 'Yaxınlıqda', 'ru': 'Рядом', 'en': 'Nearby'},
+    'eta': {'az': 'Çatış', 'ru': 'Прибытие', 'en': 'ETA'},
   };
 
   String t(String key) => _v[key]?[lang] ?? _v[key]?['en'] ?? key;
