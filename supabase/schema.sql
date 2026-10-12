@@ -102,7 +102,7 @@ create table mechanic_orders (
   rider uuid references profiles(id) on delete set null,
   problem_id text references problem_types(id),
   bike uuid references bikes(id) on delete set null,
-  geom geography(Point,4326) not(null),
+  geom geography(Point,4326) not null,
   status text default 'searching',
   mechanic uuid references mechanic_profiles(id) on delete set null,
   price_approx int default 15, price_final int,
